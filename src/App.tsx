@@ -49,12 +49,11 @@ const ADMIN_EMAILS = ['thaild@gmail.com', 'skinteller.vn@gmail.com'];
 interface CompressionSettings {
   maxWidth: number;
   quality: number;
-  enabledCategories: ('to-an' | 'to-chup' | 'to-du-lich')[];
 }
 
 export default function App() {
   // State
-  const [view, setView] = useState<'home' | 'login' | 'admin' | 'ratings' | 'filters' | 'compression' | 'to-an' | 'to-chup' | 'to-du-lich' | 'to-lam-da'>('to-an');
+  const [view, setView] = useState<'home' | 'login' | 'admin' | 'ratings' | 'filters' | 'compression' | 'to-an' | 'to-chup' | 'to-lam-da'>('to-lam-da');
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
   const [filtersLoaded, setFiltersLoaded] = useState(false);
@@ -75,11 +74,13 @@ export default function App() {
   // Compression Settings
   const [compressionSettings, setCompressionSettings] = useState<CompressionSettings>(() => {
     const saved = localStorage.getItem('compressionSettings');
-    const defaultSettings: CompressionSettings = { maxWidth: 1600, quality: 80, enabledCategories: ['to-an', 'to-chup', 'to-du-lich'] };
+    const defaultSettings: CompressionSettings = { maxWidth: 1600, quality: 80 };
     if (!saved) return defaultSettings;
     try {
       const parsed = JSON.parse(saved);
-      return { ...defaultSettings, ...parsed };
+      // Remove enabledCategories if it exists in saved data
+      const { enabledCategories, ...rest } = parsed;
+      return { ...defaultSettings, ...rest };
     } catch {
       return defaultSettings;
     }
@@ -100,7 +101,19 @@ export default function App() {
   const [adminPage, setAdminPage] = useState(1);
   const [perPage, setPerPage] = useState(5);
   const [currentTime, setCurrentTime] = useState('');
-  const [adminCategory, setAdminCategory] = useState<'to-an' | 'to-chup' | 'to-du-lich' | 'to-lam-da'>('to-an');
+  const [adminCategory, setAdminCategory] = useState<'to-an' | 'to-chup' | 'to-du-lich' | 'to-lam-da'>('to-lam-da');
+
+  // Clear filters on view change
+  useEffect(() => {
+    setSelectedCities(new Set());
+    setSelectedRatings(new Set());
+    setSelectedTypes(new Set());
+    setSelectedForms(new Set());
+    setOpenNowMode(false);
+    setSearchQuery('');
+    setPage(1);
+    setAdminPage(1);
+  }, [view, adminCategory]);
 
   // UI Overlays
   const [isSearchOpen, setIsSearchOpen] = useState(false);
@@ -269,7 +282,7 @@ export default function App() {
         d = d.filter(r => r.category === 'to-chup');
       } else if (adminCategory === 'to-lam-da') {
         d = d.filter(r => r.category === 'to-lam-da');
-      } else {
+      } else if (adminCategory === 'to-du-lich') {
         d = d.filter(r => r.category === 'to-du-lich');
       }
     }
@@ -352,20 +365,28 @@ export default function App() {
         });
       };
 
-      // Process images in parallel
+      // Process images
+      onProgress?.(`Đang tải lên ${finalImages.filter(x => typeof x !== 'string').length} ảnh...`);
       const uploadPromises = finalImages.map(async (item, i) => {
         if (typeof item === 'string') {
           return { type: 'existing', url: item, index: i };
         } else {
           try {
-            console.log(`Đang chuyển ảnh ${i} sang base64...`);
-            const base64Url = await fileToBase64(item as File | Blob);
-            console.log(`Chuyển ảnh ${i} thành công.`);
-            const path = '';
-            return { type: 'new', url: base64Url, path, index: i };
+            const file = item as File | Blob;
+            const extension = file instanceof File ? file.name.split('.').pop() : 'jpg';
+            const fileName = `${Date.now()}_${i}.${extension}`;
+            const path = `restaurants/${id}/${fileName}`;
+            const sRef = storageRef(storage, path);
+            
+            console.log(`Đang tải ảnh ${i} lên Storage: ${path}...`);
+            const snapshot = await uploadBytes(sRef, file);
+            const downloadUrl = await getDownloadURL(snapshot.ref);
+            console.log(`Tải ảnh ${i} thành công.`);
+            
+            return { type: 'new', url: downloadUrl, path, index: i };
           } catch (err) {
-            console.error(`Xử lý ảnh ${i} thất bại:`, err);
-            throw new Error(`Xử lý ảnh ${i} thất bại: ${err instanceof Error ? err.message : String(err)}`);
+            console.error(`Tải ảnh ${i} thất bại:`, err);
+            throw new Error(`Tải ảnh ${i} thất bại: ${err instanceof Error ? err.message : String(err)}`);
           }
         }
       });
@@ -614,7 +635,9 @@ export default function App() {
                       index={(page - 1) * perPage + i}
                       isOpen={isRestaurantOpen(r, currentTime)}
                       currentTime={currentTime}
-                      isSkinCare={view === 'to-lam-da'}
+                      isSkinCare={r.category === 'to-lam-da'}
+                      typesList={r.category === 'to-lam-da' ? skinTypesList : (r.category === 'to-chup' ? galleryTypesList : typesList)}
+                      formsList={r.category === 'to-lam-da' ? skinIssuesList : formsList}
                     />
                   )
                 ))}
@@ -675,14 +698,14 @@ export default function App() {
                 </div>
                 <div className="space-y-2.5">
                   <label className="pl-1 text-[12px] font-extrabold uppercase tracking-widest text-text-mid">Mật khẩu</label>
-                  <input name="password" type="password" className="fi" placeholder="M8nchester" required />
+                  <input name="password" type="password" className="fi" placeholder="········" required />
                 </div>
                 <button type="submit" className="w-full rounded-[18px] bg-gradient-to-br from-rose to-rose-dark p-4.5 text-base font-extrabold text-white shadow-xl shadow-rose/20 active:scale-95">
                   ĐĂNG NHẬP
                 </button>
               </form>
 
-              <button onClick={() => setView('to-an')} className="mt-7 w-full text-center text-sm font-bold text-text-light">
+              <button onClick={() => setView('to-lam-da')} className="mt-7 w-full text-center text-sm font-bold text-text-light">
                 Quay lại trang chủ
               </button>
             </motion.div>
@@ -693,65 +716,43 @@ export default function App() {
           <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="px-5">
             <div className="flex flex-col gap-5 py-6">
               <div className="flex flex-col gap-4">
-                <div className="flex items-center justify-between">
-                  {/* Category Selector replaces "Bảng Quản lý" */}
-                  <div className="flex items-center gap-3 p-1 rounded-[20px] bg-rose/5 border border-rose/10 w-fit">
-                    <button 
-                      onClick={() => { setAdminCategory('to-an'); setAdminPage(1); }}
-                      className={cn(
-                        "px-6 py-2 rounded-[16px] text-xs font-black uppercase tracking-widest transition-all",
-                        adminCategory === 'to-an' ? "bg-white text-rose shadow-sm" : "text-text-light hover:text-rose-mid"
-                      )}
-                    >
-                      Tớ ăn
-                    </button>
-                    <button 
-                      onClick={() => { setAdminCategory('to-lam-da'); setAdminPage(1); }}
-                      className={cn(
-                        "px-6 py-2 rounded-[16px] text-xs font-black uppercase tracking-widest transition-all",
-                        adminCategory === 'to-lam-da' ? "bg-white text-rose shadow-sm" : "text-text-light hover:text-rose-mid"
-                      )}
-                    >
-                      Tớ làm da
-                    </button>
-                    <button 
-                      onClick={() => { setAdminCategory('to-chup'); setAdminPage(1); }}
-                      className={cn(
-                        "px-6 py-2 rounded-[16px] text-xs font-black uppercase tracking-widest transition-all",
-                        adminCategory === 'to-chup' ? "bg-white text-rose shadow-sm" : "text-text-light hover:text-rose-mid"
-                      )}
-                    >
-                      Tớ chụp
-                    </button>
-                    <button 
-                      onClick={() => { setAdminCategory('to-du-lich'); setAdminPage(1); }}
-                      className={cn(
-                        "px-6 py-2 rounded-[16px] text-xs font-black uppercase tracking-widest transition-all",
-                        adminCategory === 'to-du-lich' ? "bg-white text-rose shadow-sm" : "text-text-light hover:text-rose-mid"
-                      )}
-                    >
-                      Tớ du lịch
-                    </button>
-                  </div>
+                {/* Management Row */}
+                <div className="grid grid-cols-2 gap-3">
+                  <button 
+                    onClick={() => setView('compression')}
+                    className="flex h-12 items-center justify-center gap-2.5 rounded-[22px] bg-indigo-500 text-[14px] font-black uppercase tracking-widest text-white shadow-lg shadow-indigo-500/20 transition-all active:scale-95"
+                  >
+                    <Zap size={18} fill="currentColor" />
+                    Quản lý nén
+                  </button>
+                  <button 
+                    onClick={() => setView('filters')}
+                    className="flex h-12 items-center justify-center gap-2.5 rounded-[22px] bg-orange-500 text-[14px] font-black uppercase tracking-widest text-white shadow-lg shadow-orange-500/20 transition-all active:scale-95"
+                  >
+                    <Settings size={18} />
+                    Quản lý bộ lọc
+                  </button>
+                </div>
 
-                  <div className="flex gap-2.5">
+                {/* Category Row */}
+                <div className="flex items-center gap-2 p-1 rounded-[20px] bg-rose/5 border border-rose/10 w-full overflow-x-auto no-scrollbar">
+                  {[
+                    { id: 'to-lam-da', label: 'Tớ làm da' },
+                    { id: 'to-an', label: 'Tớ ăn' },
+                    { id: 'to-chup', label: 'Tớ chụp' },
+                    { id: 'to-du-lich', label: 'Tớ du lịch' }
+                  ].map(cat => (
                     <button 
-                      onClick={() => setView('compression')}
-                      className="flex h-10 w-10 sm:w-auto items-center justify-center gap-1.5 rounded-xl bg-indigo-500 sm:px-4 text-[13px] font-extrabold text-white shadow shadow-indigo-500/20 transition-all active:scale-95"
-                      title="Quản lý nén"
+                      key={cat.id}
+                      onClick={() => { setAdminCategory(cat.id as any); setAdminPage(1); }}
+                      className={cn(
+                        "flex-1 px-4 py-2 rounded-[16px] text-[11px] font-black uppercase tracking-widest transition-all whitespace-nowrap",
+                        adminCategory === cat.id ? "bg-white text-rose shadow-sm" : "text-text-light hover:text-rose-mid"
+                      )}
                     >
-                      <Zap size={16} fill="currentColor" />
-                      <span className="hidden sm:inline">Quản lý nén</span>
+                      {cat.label}
                     </button>
-                    <button 
-                      onClick={() => setView('filters')}
-                      className="flex h-10 w-10 sm:w-auto items-center justify-center gap-1.5 rounded-xl bg-orange-500 sm:px-4 text-[13px] font-extrabold text-white shadow shadow-orange-500/20 transition-all active:scale-95"
-                      title="Quản lý bộ lọc"
-                    >
-                      <Settings size={16} />
-                      <span className="hidden sm:inline">Quản lý bộ lọc</span>
-                    </button>
-                  </div>
+                  ))}
                 </div>
 
                 <div className="flex gap-2.5">
@@ -763,10 +764,11 @@ export default function App() {
                     className="flex h-12 w-full items-center justify-center gap-2.5 rounded-[22px] bg-green px-6 text-[15px] font-black uppercase tracking-widest text-white shadow shadow-green/20 transition-all active:scale-95"
                   >
                     <Plus size={20} strokeWidth={3} />
-                    {adminCategory === 'to-an' ? "Thêm quán" : adminCategory === 'to-chup' ? "Thêm Bộ ảnh" : adminCategory === 'to-lam-da' ? "Thêm bài viết" : "Thêm chuyến đi"}
+                    {adminCategory === 'to-an' ? "Thêm quán" : adminCategory === 'to-chup' ? "Thêm Bộ ảnh" : adminCategory === 'to-lam-da' ? "Thêm bài viết" : "Thêm Chuyến đi"}
                   </button>
                 </div>
               </div>
+
               
               <div className="-mx-5 -mb-4">
                 <FilterSection
@@ -841,7 +843,9 @@ export default function App() {
                     index={(adminPage - 1) * perPage + i}
                     isOpen={isRestaurantOpen(r as Restaurant, currentTime)}
                     currentTime={currentTime}
-                    isSkinCare={adminCategory === 'to-lam-da'}
+                    isSkinCare={r.category === 'to-lam-da'}
+                    typesList={r.category === 'to-lam-da' ? skinTypesList : (r.category === 'to-chup' ? galleryTypesList : typesList)}
+                    formsList={r.category === 'to-lam-da' ? skinIssuesList : formsList}
                     actions={
                       <>
                         <button 

@@ -43,7 +43,7 @@ export default function FilterManager({
 
   const getActiveData = () => {
     switch (activeTab) {
-      case 'cities': return mainTab === 'to-du-lich' ? citiesDuLich : cities;
+      case 'cities': return cities;
       case 'types': return types;
       case 'forms': return forms;
       case 'ratings': return ratings.map((r, i) => ({ id: i.toString(), label: r.label, bc: r.bc }));
@@ -58,8 +58,7 @@ export default function FilterManager({
     const text = newItemText.trim();
     // Removed window.confirm as it might be blocking and it's already an explicit click
     if (activeTab === 'cities') {
-      if (mainTab === 'to-du-lich') setCitiesDuLich([...citiesDuLich, { id: 'city_dl_'+Date.now(), label: text }]);
-      else setCities([...cities, { id: 'city_'+Date.now(), label: text }]);
+      setCities([...cities, { id: 'city_'+Date.now(), label: text }]);
     } else if (activeTab === 'types') {
       setTypes([...types, { id: 'type_'+Date.now(), label: text }]);
     } else if (activeTab === 'forms') {
@@ -78,8 +77,7 @@ export default function FilterManager({
 
   const handleRemove = (indexToRem: number, gId: string) => {
     if (activeTab === 'cities') {
-      if (mainTab === 'to-du-lich') setCitiesDuLich(citiesDuLich.filter(x => x.id !== gId));
-      else setCities(cities.filter(x => x.id !== gId));
+      setCities(cities.filter(x => x.id !== gId));
     }
     else if (activeTab === 'types') setTypes(types.filter(x => x.id !== gId));
     else if (activeTab === 'forms') setForms(forms.filter(x => x.id !== gId));
@@ -101,8 +99,7 @@ export default function FilterManager({
 
   const handleChange = (indexToEdit: number, gId: string, newVal: string) => {
     if (activeTab === 'cities') {
-      if (mainTab === 'to-du-lich') setCitiesDuLich(citiesDuLich.map(x => x.id === gId ? {...x, label: newVal} : x));
-      else setCities(cities.map(x => x.id === gId ? {...x, label: newVal} : x));
+      setCities(cities.map(x => x.id === gId ? {...x, label: newVal} : x));
     }
     else if (activeTab === 'types') setTypes(types.map(x => x.id === gId ? {...x, label: newVal} : x));
     else if (activeTab === 'forms') setForms(forms.map(x => x.id === gId ? {...x, label: newVal} : x));
@@ -115,7 +112,7 @@ export default function FilterManager({
   const data = getActiveData();
   const paginatedData = data.slice((page - 1) * perPage, page * perPage);
 
-  const subTabs = (mainTab === 'to-an')
+  const subTabs = (mainTab === 'to-an' || mainTab === 'to-du-lich')
     ? [
         { id: 'cities' as SubTab, name: 'Thành phố' },
         { id: 'types' as SubTab, name: 'Loại quán' },
@@ -124,13 +121,8 @@ export default function FilterManager({
       ]
     : mainTab === 'to-lam-da'
     ? [
-        { id: 'cities' as SubTab, name: 'Thành phố' },
         { id: 'skinIssues' as SubTab, name: 'Vấn đề da' },
         { id: 'skinTypes' as SubTab, name: 'Phương pháp' }
-      ]
-    : mainTab === 'to-du-lich'
-    ? [
-        { id: 'cities' as SubTab, name: 'Thành phố' }
       ]
     : [
         { id: 'galleryTypes' as SubTab, name: 'Loại máy' }
@@ -139,7 +131,8 @@ export default function FilterManager({
   // Auto-switch sub-tab if main tab changes
   React.useEffect(() => {
     if (mainTab === 'to-chup') setActiveTab('galleryTypes');
-    else if (activeTab === 'galleryTypes') setActiveTab('cities');
+    else if (mainTab === 'to-lam-da') setActiveTab('skinIssues');
+    else if (activeTab === 'galleryTypes' || activeTab === 'skinTypes' || activeTab === 'skinIssues') setActiveTab('cities');
   }, [mainTab]);
   
   return (
@@ -157,12 +150,11 @@ export default function FilterManager({
 
       {/* Main Tabs */}
       <div className="flex bg-rose/5 p-1 rounded-2xl border border-rose/10 gap-1">
-        {[
-          { id: 'to-an', name: 'Tớ ăn' },
-          { id: 'to-lam-da', name: 'Tớ làm da' },
-          { id: 'to-chup', name: 'Tớ chụp' },
-          { id: 'to-du-lich', name: 'Tớ du lịch' }
-        ].map(t => (
+          {[
+            { id: 'to-an', name: 'Tớ ăn' },
+            { id: 'to-lam-da', name: 'Tớ làm da' },
+            { id: 'to-chup', name: 'Tớ chụp' }
+          ].map(t => (
           <button
             key={t.id}
             onClick={() => setMainTab(t.id as MainTab)}

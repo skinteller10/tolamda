@@ -20,7 +20,7 @@ export default function Header({ onSearchClick, onAdminClick, showAdminButton, t
           {title}
         </h1>
         <div className="flex w-1/3 justify-center items-center gap-5">
-          <a href="https://www.instagram.com/tolamidavn" target="_blank" rel="noopener noreferrer" className="hover:scale-110 transition-transform p-1.5 bg-gradient-to-tr from-[#f9ce34] via-[#ee2a7b] to-[#6228d7] text-white rounded-lg shadow-sm">
+          <a href="https://www.instagram.com/tolamdavn" target="_blank" rel="noopener noreferrer" className="hover:scale-110 transition-transform p-1.5 bg-gradient-to-tr from-[#f9ce34] via-[#ee2a7b] to-[#6228d7] text-white rounded-lg shadow-sm">
             <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><rect x="2" y="2" width="20" height="20" rx="5" ry="5"></rect><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"></path><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"></line></svg>
           </a>
           <a href="#" className="hover:scale-110 transition-transform p-1.5 bg-[#1877F2] text-white rounded-lg shadow-sm">
@@ -38,7 +38,7 @@ export default function Header({ onSearchClick, onAdminClick, showAdminButton, t
             <motion.button
               whileTap={{ scale: 0.95 }}
               onClick={onAdminClick}
-              className="flex h-9 items-center justify-center rounded-xl bg-rose-dark px-3 text-[12px] font-extrabold tracking-wide text-white shadow-sm"
+              className="flex h-9 items-center justify-center rounded-xl bg-gradient-to-br from-orange-500 to-orange-600 px-3 text-[12px] font-black uppercase tracking-wider text-white shadow-md shadow-orange-500/20 border border-orange-400/20"
             >
               Quản lý
             </motion.button>

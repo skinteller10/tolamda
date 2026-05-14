@@ -47,7 +47,9 @@ export default function FilterSection({
   const isChup = mode === 'to-chup';
   const isDuLich = mode === 'to-du-lich';
   const isSkinCare = mode === 'to-lam-da';
-  const hasSchedule = isAn || isSkinCare; 
+  const hasSchedule = isAn; 
+
+  if (isDuLich) return null;
 
   return (
     <div className="flex w-full max-w-[720px] flex-col gap-4 p-5 pb-0">
@@ -66,7 +68,7 @@ export default function FilterSection({
 
       {expanded && (
         <div className="flex flex-col gap-3 animate-in fade-in slide-in-from-top-2 duration-300">
-          {(isAn || isDuLich || isSkinCare) && (
+          {(isAn) && (
             <div className="rounded-2xl border border-rose/10 bg-white/80 backdrop-blur-sm p-4 shadow-sm flex flex-col gap-3">
               <span className="shrink-0 text-[11px] font-black uppercase tracking-[0.2em] text-text-light/80">
                 Thành phố
@@ -85,7 +87,7 @@ export default function FilterSection({
             </div>
           )}
 
-          {(isAn || isSkinCare) && (
+          {(isAn) && (
             <div className="rounded-2xl border border-rose/10 bg-white/80 backdrop-blur-sm p-4 shadow-sm flex flex-col gap-3">
               <span className="shrink-0 text-[11px] font-black uppercase tracking-[0.2em] text-text-light/80">
                 Đánh giá
@@ -104,7 +106,7 @@ export default function FilterSection({
             </div>
           )}
 
-          <div className={cn("grid grid-cols-1 md:grid-cols-2 gap-3", (isChup || isDuLich) && "hidden md:hidden")}>
+          <div className={cn("grid grid-cols-1 gap-3", isAn && "md:grid-cols-2", isChup && "hidden md:hidden")}>
             {(isAn || isSkinCare) && (
               <>
                 <div className="rounded-2xl border border-rose/10 bg-white/80 backdrop-blur-sm p-4 shadow-sm flex flex-col gap-3">

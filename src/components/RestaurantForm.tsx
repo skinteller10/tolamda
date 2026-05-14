@@ -14,13 +14,14 @@ function cn(...inputs: ClassValue[]) {
 export const compressImage = async (
   file: File, 
   quality: number = 0.8, 
-  maxWidth: number = 1200
+  maxWidth: number = 1200,
+  maxSizeMB: number = 0.15
 ) => {
     const options = {
-      maxSizeMB: 0.15, // Cố gắng nén dưới 150KB để lưu base64
-      maxWidthOrHeight: 800,
+      maxSizeMB: maxSizeMB,
+      maxWidthOrHeight: maxWidth,
       useWebWorker: false,
-      initialQuality: 0.6,
+      initialQuality: quality,
     };
 
   try {
@@ -35,7 +36,6 @@ export const compressImage = async (
 interface CompressionSettings {
   maxWidth: number;
   quality: number;
-  enabledCategories: ('to-an' | 'to-chup' | 'to-du-lich' | 'to-lam-da')[];
 }
 
 interface RestaurantFormProps {
@@ -58,13 +58,14 @@ export default function RestaurantForm({
 }: RestaurantFormProps) {
   const isAn = mode === 'to-an';
   const isSkinCare = mode === 'to-lam-da';
+  const isDuLich = mode === 'to-du-lich';
   const isGalleryLayout = mode === 'to-chup' || mode === 'to-du-lich';
   const [formData, setFormData] = useState<Partial<Restaurant>>({
     name: '',
     city: 'hanoi',
-    type: typesList[0]?.id || 'cafe',
+    type: typesList[0]?.id || '',
     category: mode,
-    form: 'offline',
+    form: formsList[0]?.id || '',
     address: '',
     open: '08:00',
     close: '22:00',
@@ -116,9 +117,9 @@ export default function RestaurantForm({
       setFormData({
         name: '',
         city: citiesList[0]?.id || 'hanoi',
-        type: typesList[0]?.id || (isAn ? 'cafe' : 'máy film'),
+        type: typesList[0]?.id || '',
         category: mode,
-        form: formsList[0]?.id || 'offline',
+        form: formsList[0]?.id || '',
         address: '',
         open: '08:00',
         close: '22:00',
@@ -147,6 +148,12 @@ export default function RestaurantForm({
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
+      if (isSkinCare && imagesData.length >= 2) {
+        alert("Bộ ảnh Tớ làm da chỉ cho phép tải lên tối đa 2 ảnh (Trước & Sau).");
+        e.target.value = '';
+        return;
+      }
+      
       if (isGalleryLayout) {
         // Skip cropping for gallery layout
         setImagesData([...imagesData, file]);
@@ -195,23 +202,36 @@ export default function RestaurantForm({
     setIsSaving(true);
     setSaveError(null);
     try {
-      setSaveError("Đang nén ảnh...");
+      setSaveError("Đang kiểm tra và nén ảnh...");
       const finalImages = await Promise.all(imagesData.map(async (item, idx) => {
-        const category = formData.category || mode;
-        const shouldCompress = compressionSettings?.enabledCategories?.includes(category as any);
-        
-        if (typeof item !== 'string' && shouldCompress) {
-          console.log(`Bắt đầu nén ảnh ${idx}...`);
-          try {
-            const result = await compressImage(item as File, compressionSettings.quality / 100, compressionSettings.maxWidth);
-            console.log(`Nén ảnh ${idx} thành công. Kích thước mới: ${result.size}`);
-            return result;
-          } catch (err) {
-            console.error(`Nén ảnh ${idx} thất bại:`, err);
-            return item; // Trả về ảnh gốc nếu nén lỗi
+        if (typeof item !== 'string') {
+          let fileToUpload = item as File;
+          const limit = 500 * 1024; // 500KB limit
+          
+          if (fileToUpload.size > limit) {
+            console.log(`Ảnh ${idx} quá 500KB (${(fileToUpload.size/1024).toFixed(2)}KB), đang nén...`);
+            try {
+              // Compress using user settings
+              const compressed = await compressImage(
+                fileToUpload, 
+                compressionSettings.quality / 100, 
+                compressionSettings.maxWidth,
+                0.48 // Try to target slightly under 500KB
+              );
+              
+              if (compressed.size > limit) {
+                throw new Error(`Ảnh số ${idx + 1} vẫn quá dung lượng cho phép (>500KB) sau khi nén. Vui lòng chọn ảnh nhẹ hơn hoặc giảm chất lượng/chiều rộng nén.`);
+              }
+              fileToUpload = compressed as File;
+              console.log(`Nén ảnh ${idx} thành công: ${(fileToUpload.size/1024).toFixed(2)}KB`);
+            } catch (err: any) {
+              console.error(`Lỗi xử lý ảnh ${idx}:`, err);
+              throw err;
+            }
           }
+          return fileToUpload;
         }
-        return item; // existing url or non-compressed image
+        return item; // existing url
       }));
       
       const finalData = { ...formData, imageTypes };
@@ -271,10 +291,12 @@ export default function RestaurantForm({
                 {editingRestaurant ? (
                     isAn ? "Cập nhật quán" : 
                     isSkinCare ? "Cập nhật bài viết" : 
+                    isDuLich ? "Cập nhật Chuyến đi" :
                     "Cập nhật Bộ ảnh"
                   ) : (
                     isAn ? "Thêm quán mới" : 
                     isSkinCare ? "Thêm bài viết mới" : 
+                    isDuLich ? "Thêm Chuyến đi" :
                     "Thêm Bộ ảnh"
                   )}
               </h2>
@@ -282,18 +304,18 @@ export default function RestaurantForm({
               <div className="space-y-6">
                 <div className="flex flex-col gap-2.5">
                   <label className="pl-1 text-[11px] font-black uppercase tracking-[0.2em] text-text-light/80">
-                    {isAn ? "Tên quán" : isSkinCare ? "Tiêu đề bài viết" : "Tên bộ ảnh"} <span className="text-red">*</span>
+                    {isAn ? "Tên quán" : isSkinCare ? "Tiêu đề bài viết" : isDuLich ? "Tên chuyến đi" : "Tên bộ ảnh"} <span className="text-red">*</span>
                   </label>
                   <input
                     value={formData.name}
                     onChange={e => setFormData({ ...formData, name: e.target.value })}
                     className="fi"
-                    placeholder={isAn ? "Tớ ăn quán nào..." : isSkinCare ? "Tiêu đề..." : "Tên bộ ảnh..."}
+                    placeholder={isAn ? "Tớ ăn quán nào..." : isSkinCare ? "Tiêu đề..." : isDuLich ? "Tên chuyến đi..." : "Tên bộ ảnh..."}
                   />
                 </div>
 
-                <div className={cn("grid grid-cols-1 sm:grid-cols-3 gap-4", isGalleryLayout && "hidden")}>
-                  {(isAn || isSkinCare) && (
+                <div className={cn("grid grid-cols-1 gap-4", isAn && "sm:grid-cols-2", isGalleryLayout && !isDuLich && "hidden", isDuLich && "hidden")}>
+                  {isAn && (
                     <div className="flex flex-col gap-2.5">
                       <label className="pl-1 text-[11px] font-black uppercase tracking-[0.2em] text-text-light/80">Thành phố</label>
                       <select
@@ -308,12 +330,13 @@ export default function RestaurantForm({
                     </div>
                   )}
                   <div className="flex flex-col gap-2.5">
-                    <label className="pl-1 text-[11px] font-black uppercase tracking-[0.2em] text-text-light/80">{isAn ? "Loại" : isSkinCare ? "Phân loại" : "Loại máy"}</label>
+                    <label className="pl-1 text-[11px] font-black uppercase tracking-[0.2em] text-text-light/80">{isAn ? "Loại" : isSkinCare ? "Phương pháp" : "Loại máy"}</label>
                     <select
-                      value={formData.type || (isGalleryLayout ? 'máy film' : 'cafe')}
+                      value={formData.type || ''}
                       onChange={e => setFormData({ ...formData, type: e.target.value })}
                       className="fi"
                     >
+                      <option value="" disabled>Chọn {isAn ? "loại" : isSkinCare ? "phương pháp" : "loại máy"}...</option>
                       {typesList.map(t => (
                         <option key={t.id} value={t.id}>{t.label}</option>
                       ))}
@@ -321,14 +344,29 @@ export default function RestaurantForm({
                   </div>
                   {(isAn || isSkinCare) && (
                     <div className="flex flex-col gap-2.5">
-                      <label className="pl-1 text-[11px] font-black uppercase tracking-[0.2em] text-text-light/80">Hình thức</label>
+                      <label className="pl-1 text-[11px] font-black uppercase tracking-[0.2em] text-text-light/80">{isSkinCare ? "Vấn đề da" : "Hình thức"}</label>
                       <select
-                        value={formData.form || 'offline'}
+                        value={formData.form || ''}
                         onChange={e => setFormData({ ...formData, form: e.target.value })}
                         className="fi"
                       >
+                        <option value="" disabled>Chọn {isSkinCare ? "vấn đề da" : "hình thức"}...</option>
                         {formsList.map(f => (
                           <option key={f.id} value={f.id}>{f.label}</option>
+                        ))}
+                      </select>
+                    </div>
+                  )}
+                  {(isAn) && (
+                    <div className="flex flex-col gap-2.5">
+                      <label className="pl-1 text-[11px] font-black uppercase tracking-[0.2em] text-text-light/80">Đánh giá</label>
+                      <select
+                        value={formData.rating}
+                        onChange={e => setFormData({ ...formData, rating: +e.target.value })}
+                        className="fi"
+                      >
+                        {ratings.map((r, i) => (
+                          <option key={i} value={i}>{r.label}</option>
                         ))}
                       </select>
                     </div>
@@ -483,7 +521,7 @@ export default function RestaurantForm({
                 {/* Spacer for rhythm */}
                 {isGalleryLayout && <div className="h-2" />}
 
-                {(isAn || isSkinCare) && (
+                {isAn && (
                   <div className="flex flex-col gap-2.5">
                     <label className="pl-1 text-[11px] font-black uppercase tracking-[0.2em] text-text-light/80">Đánh giá</label>
                     <select
@@ -498,9 +536,9 @@ export default function RestaurantForm({
                   </div>
                 )}
 
-                {(isAn || isSkinCare) && (
+                {(isAn || isSkinCare || isDuLich) && (
                   <div className="flex flex-col gap-2.5">
-                    <label className="pl-1 text-[11px] font-black uppercase tracking-[0.2em] text-text-light/80">{isAn ? "Thông tin" : "Bài viết"}</label>
+                    <label className="pl-1 text-[11px] font-black uppercase tracking-[0.2em] text-text-light/80">{isAn ? "Thông tin" : (isSkinCare || isDuLich) ? "Bài viết" : "Mô tả"}</label>
                     <textarea
                       value={formData.info}
                       onChange={e => setFormData({ ...formData, info: e.target.value })}

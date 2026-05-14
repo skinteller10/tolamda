@@ -12,7 +12,6 @@ function cn(...inputs: ClassValue[]) {
 interface CompressionSettings {
   maxWidth: number;
   quality: number;
-  enabledCategories: ('to-an' | 'to-chup' | 'to-du-lich')[];
 }
 
 interface CompressionManagerProps {
@@ -71,12 +70,8 @@ export default function CompressionManager({ settings, onSave, onBack }: Compres
         {/* Header */}
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-4">
-            <div className="relative flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-br from-rose to-rose-dark text-white shadow-lg shadow-rose/20">
-               <Settings2 size={24} />
-               <div className="absolute -top-1 -right-1 h-3.5 w-3.5 rounded-full bg-green border-2 border-white" />
-            </div>
             <div>
-              <h1 className="text-2xl font-bold text-text font-serif italic">Nén ảnh</h1>
+              <h1 className="text-2xl font-bold text-text font-serif italic">Quản lý nén</h1>
             </div>
           </div>
           <button 
@@ -86,40 +81,6 @@ export default function CompressionManager({ settings, onSave, onBack }: Compres
             <ArrowLeft size={18} className="text-rose" />
             Quay lại
           </button>
-        </div>
-
-        {/* Category Toggles */}
-        <div className="space-y-4">
-           <label className="text-[11px] font-black uppercase tracking-[0.2em] text-text-light/80 pl-1">TRANG ÁP DỤNG</label>
-           <div className="flex flex-wrap gap-3">
-              {[
-                { id: 'to-an', label: 'Tớ ăn' },
-                { id: 'to-chup', label: 'Tớ chụp' },
-                { id: 'to-du-lich', label: 'Tớ du lịch' }
-              ].map(cat => {
-                const isEnabled = config.enabledCategories?.includes(cat.id as any) ?? false;
-                return (
-                  <button
-                    key={cat.id}
-                    onClick={() => {
-                      const currentCategories = config.enabledCategories || [];
-                      const next = isEnabled 
-                        ? currentCategories.filter(c => c !== cat.id)
-                        : [...currentCategories, cat.id as any];
-                      setConfig({ ...config, enabledCategories: next });
-                    }}
-                    className={cn(
-                      "flex-1 min-w-[120px] rounded-[22px] p-4 font-bold text-sm transition-all border-2",
-                      isEnabled 
-                        ? "bg-rose/5 border-rose text-rose shadow-sm" 
-                        : "bg-white border-rose/5 text-text-light hover:border-rose/20"
-                    )}
-                  >
-                    {cat.label}
-                  </button>
-                );
-              })}
-           </div>
         </div>
 
         {/* Controls */}

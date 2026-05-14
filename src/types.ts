@@ -9,7 +9,7 @@ export interface Restaurant {
   id: string;
   name: string;
   city: City;
-  category?: 'to-an' | 'to-chup' | 'to-du-lich';
+  category?: 'to-an' | 'to-chup' | 'to-du-lich' | 'to-lam-da';
   type?: string;
   form?: string;
   rating: number;
