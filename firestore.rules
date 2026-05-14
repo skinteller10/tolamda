@@ -14,7 +14,7 @@ service cloud.firestore {
     }
 
     function isAdmin() {
-      return isSignedIn(); // Allow any signed in user for now
+      return isSignedIn() && (request.auth.token.email == 'thaild@gmail.com' || request.auth.token.email == 'thaild@local.com');
     }
 
     function isValidId(id) {
@@ -60,8 +60,13 @@ service cloud.firestore {
 
     // --- Collection Routes ---
 
+    match /restaurants {
+      allow list: if true;
+    }
+
     match /restaurants/{restaurantId} {
-      allow read: if true;
+      allow get: if true;
+      allow list: if true;
       
       // Allow settings documents for admin
       allow write: if isAdmin() && (restaurantId == 'settings_filters' || restaurantId == 'settings_gallery');

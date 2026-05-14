@@ -24,9 +24,7 @@ export const compressImage = async (
     };
 
   try {
-    const compressTask = imageCompression(file, options);
-    const timeoutTask = new Promise<File>((_, reject) => setTimeout(() => reject(new Error("Quá thời gian nén ảnh")), 60000));
-    const compressedFile = await Promise.race([compressTask, timeoutTask]);
+    const compressedFile = await imageCompression(file, options);
     return compressedFile;
   } catch (error) {
     console.error("Lỗi nén ảnh:", error);

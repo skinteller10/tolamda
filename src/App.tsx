@@ -44,7 +44,7 @@ import GalleryCard from './components/GalleryCard';
 import { motion, AnimatePresence } from 'motion/react';
 import { Plus, Edit3, Trash2, ArrowLeft, Settings, Zap, Sparkles } from 'lucide-react';
 
-const ADMIN_EMAIL = 'thaild@local.com';
+const ADMIN_EMAIL = 'thaild@gmail.com';
 
 interface CompressionSettings {
   maxWidth: number;
@@ -337,17 +337,15 @@ export default function App() {
           const sRef = storageRef(storage, path);
           
           try {
-            const uploadTask = uploadBytes(sRef, item as File | Blob);
-            // 180s timeout for each image upload
-            const timeoutUpload = new Promise((_, reject) => setTimeout(() => reject(new Error(`Lỗi tải ảnh ${i}: quá hạn.`)), 180000));
-            const snapshot = await Promise.race([uploadTask, timeoutUpload]) as any;
+            console.log(`Đang tải ảnh ${i} lên Storage...`);
+            const snapshot = await uploadBytes(sRef, item as File | Blob);
             
             const downloadUrl = await getDownloadURL(snapshot.ref);
             console.log(`Tải ảnh ${i} thành công: ${downloadUrl}`);
             return { type: 'new', url: downloadUrl, path, index: i };
           } catch (err) {
             console.error(`Tải ảnh ${i} thất bại:`, err);
-            throw err;
+            throw new Error(`Tải ảnh ${i} thất bại: ${err instanceof Error ? err.message : String(err)}`);
           }
         }
       });
@@ -386,8 +384,7 @@ export default function App() {
         }
       });
 
-      // Cleanup removed images from storage in parallel
-      onProgress?.('Đang dọn dẹp ảnh cũ...');
+      onProgress?.('Đang xóa ảnh cũ...');
       const allNewPaths = [newImgPath, ...newExtraPaths].filter(Boolean);
       const allOldPaths = [editingRestaurant?.imgPath, ...(editingRestaurant?.imagesPaths || [])].filter(Boolean);
       const pathsToDelete = allOldPaths.filter(p => !allNewPaths.includes(p));
@@ -396,9 +393,7 @@ export default function App() {
         if (p) {
           try { 
             console.log(`Xóa ảnh cũ: ${p}...`);
-            const delTask = deleteObject(storageRef(storage, p)); 
-            const timeoutDel = new Promise((_, reject) => setTimeout(() => reject(new Error("Timeout xóa ảnh")), 10000));
-            await Promise.race([delTask, timeoutDel]);
+            await deleteObject(storageRef(storage, p)); 
             console.log(`Xóa ảnh cũ ${p} thành công.`);
           } catch (e) {
             console.warn(`Không thể xóa ảnh cũ ${p}:`, e);
@@ -437,9 +432,7 @@ export default function App() {
       
       onProgress?.('Đang lưu vào Firestore...');
       console.log('Đang lưu thông tin quán vào Firestore...');
-      const setDocTask = setDoc(doc(db, 'restaurants', String(id)), restToSave, { merge: true });
-      const timeoutSetDoc = new Promise((_, reject) => setTimeout(() => reject(new Error("Lỗi lưu dữ liệu: quá hạn do mất mạng hoặc chưa cấp quyền.")), 180000));
-      await Promise.race([setDocTask, timeoutSetDoc]);
+      await setDoc(doc(db, 'restaurants', String(id)), restToSave, { merge: true });
       console.log('Lưu vào Firestore thành công.');
       
       if (editingRestaurant) {
