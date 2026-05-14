@@ -12,11 +12,19 @@ const storage = firebase.storage();
 
 // Helper lấy data
 const getRestaurants = async (category) => {
-    let query = db.collection('restaurants');
-    if (category) {
-        query = query.where('category', '==', category);
+    try {
+        let query = db.collection('restaurants');
+        if (category) {
+            query = query.where('category', '==', category);
+        }
+        const snapshot = await query.orderBy('createdAt', 'desc').get();
+        return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+    } catch (error) {
+        console.error("Firestore Error:", error);
+        if (error.message.includes("composite index")) {
+            throw new Error("Cần tạo Index trong Firebase. Click link trong Console để tạo.");
+        }
+        throw error;
     }
-    const snapshot = await query.orderBy('createdAt', 'desc').get();
-    return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
 };
 </script>
