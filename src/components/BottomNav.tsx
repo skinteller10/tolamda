@@ -10,11 +10,9 @@ function cn(...inputs: ClassValue[]) {
 interface BottomNavProps {
   view: 'home' | 'login' | 'admin' | 'ratings' | 'filters' | 'to-an' | 'to-chup' | 'to-du-lich' | 'to-lam-da';
   onNavClick: (view: any) => void;
-  isLoggedIn: boolean;
-  onLogout: () => void;
 }
 
-export default function BottomNav({ view, onNavClick, isLoggedIn, onLogout }: BottomNavProps) {
+export default function BottomNav({ view, onNavClick }: BottomNavProps) {
   return (
     <div className="fixed bottom-0 left-0 right-0 z-[900] border-t border-rose/15 bg-bg/94 backdrop-blur-xl">
       <nav className="mx-auto flex w-full max-w-[720px] items-center justify-around px-0 pb-[calc(10px+env(safe-area-inset-bottom))] pt-2.5">

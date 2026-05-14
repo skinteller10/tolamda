@@ -42,9 +42,9 @@ import FilterManager from './components/FilterManager';
 import CompressionManager from './components/CompressionManager';
 import GalleryCard from './components/GalleryCard';
 import { motion, AnimatePresence } from 'motion/react';
-import { Plus, Edit3, Trash2, ArrowLeft, Settings, Zap, Sparkles } from 'lucide-react';
+import { Plus, Edit3, Trash2, Settings, Zap } from 'lucide-react';
 
-const ADMIN_EMAIL = 'thaild@gmail.com';
+const ADMIN_EMAILS = ['thaild@gmail.com', 'skinteller.vn@gmail.com'];
 
 interface CompressionSettings {
   maxWidth: number;
@@ -175,11 +175,12 @@ export default function App() {
   }, []);
 
   useEffect(() => {
-    if (!filtersLoaded || !user) return;
+    if (!filtersLoaded || !user || !user.email || !ADMIN_EMAILS.includes(user.email)) return;
     const timeoutId = setTimeout(async () => {
       try {
         await setDoc(doc(db, 'restaurants', 'settings_filters'), {
           cities: citiesList,
+          citiesDuLich: citiesListDuLich,
           types: typesList,
           forms: formsList,
           ratings: ratings,
@@ -203,7 +204,7 @@ export default function App() {
       }
     }, 1500);
     return () => clearTimeout(timeoutId);
-  }, [citiesList, typesList, formsList, ratings, galleryTypesList, filtersLoaded, user]);
+  }, [citiesList, citiesListDuLich, typesList, formsList, ratings, galleryTypesList, skinTypesList, skinIssuesList, filtersLoaded, user]);
 
   // Timer for "Open Now"
   useEffect(() => {
@@ -239,7 +240,7 @@ export default function App() {
            checkBranch(r.branch2Open2, r.branch2Close2);
   };
 
-  const isAdmin = useMemo(() => !!user, [user]);
+  const isAdmin = useMemo(() => !!user && (user.email ? ADMIN_EMAILS.includes(user.email) : false), [user]);
 
   const isFiltered = useMemo(() => {
     return selectedCities.size > 0 || selectedRatings.size > 0 || selectedTypes.size > 0 || selectedForms.size > 0 || openNowMode;
@@ -248,6 +249,7 @@ export default function App() {
   const isAnView = view === 'to-an' || (view === 'admin' && adminCategory === 'to-an');
   const isChupView = view === 'to-chup' || (view === 'admin' && adminCategory === 'to-chup');
   const isDuLichView = view === 'to-du-lich' || (view === 'admin' && adminCategory === 'to-du-lich');
+  const isSkinCareView = view === 'to-lam-da' || (view === 'admin' && adminCategory === 'to-lam-da');
 
   const filteredRestaurants = useMemo(() => {
     let d = restaurants;
@@ -282,7 +284,7 @@ export default function App() {
         d = d.filter(r => selectedForms.has(r.form || 'offline'));
       }
     }
-    if (openNowMode && (isAnView || isDuLichView)) d = d.filter(r => isRestaurantOpen(r, currentTime));
+    if (openNowMode && (isAnView || isDuLichView || isSkinCareView)) d = d.filter(r => isRestaurantOpen(r, currentTime));
     
     if (searchQuery) {
       const q = searchQuery.toLowerCase();
@@ -310,7 +312,7 @@ export default function App() {
 
     try {
       await signInWithEmailAndPassword(auth, finalEmail, password);
-      setView('home');
+      setView('to-an');
     } catch (error: any) {
       console.error('Đăng nhập thất bại', error);
       if (error.code === 'auth/operation-not-allowed') {
@@ -325,7 +327,7 @@ export default function App() {
 
   const handleLogout = async () => {
     await signOut(auth);
-    setView('home');
+    setView('to-an');
   };
 
   const handleSaveRestaurant = async (data: Partial<Restaurant>, finalImages: (string | File | Blob)[], onProgress?: (msg: string) => void) => {
@@ -486,11 +488,15 @@ export default function App() {
         citiesDuLich: citiesListDuLich,
         types: typesList,
         forms: formsList,
-        ratings: ratings
-      });
+        ratings: ratings,
+        skinTypes: skinTypesList,
+        skinIssues: skinIssuesList,
+        isSettingsMap: true
+      }, { merge: true });
       await setDoc(doc(db, 'restaurants', 'settings_gallery'), {
-        types: galleryTypesList
-      });
+        types: galleryTypesList,
+        isSettingsMap: true
+      }, { merge: true });
       alert('Đã lưu các thuộc tính bộ lọc thành công!');
     } catch (err) {
       console.error(err);
@@ -676,7 +682,7 @@ export default function App() {
                 </button>
               </form>
 
-              <button onClick={() => setView('home')} className="mt-7 w-full text-center text-sm font-bold text-text-light">
+              <button onClick={() => setView('to-an')} className="mt-7 w-full text-center text-sm font-bold text-text-light">
                 Quay lại trang chủ
               </button>
             </motion.div>
@@ -946,8 +952,6 @@ export default function App() {
       <BottomNav
         view={view}
         onNavClick={setView}
-        isLoggedIn={!!user}
-        onLogout={handleLogout}
       />
 
       {/* Overlays */}
