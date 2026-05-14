@@ -13,11 +13,12 @@ function cn(...inputs: ClassValue[]) {
 interface GalleryCardProps {
   restaurant: Restaurant;
   index: number;
+  mode?: 'to-an' | 'to-chup' | 'to-du-lich' | 'to-lam-da';
 }
 
 const IMAGES_PER_PAGE = 5;
 
-const GalleryCard: React.FC<GalleryCardProps> = ({ restaurant, index }) => {
+const GalleryCard: React.FC<GalleryCardProps> = ({ restaurant, index, mode }) => {
   const [selectedImageIndex, setSelectedImageIndex] = useState<number | null>(null);
   const [imagePage, setImagePage] = useState(1);
   
@@ -40,6 +41,11 @@ const GalleryCard: React.FC<GalleryCardProps> = ({ restaurant, index }) => {
           <h2 className="text-[20px] font-black uppercase tracking-tight text-text leading-none">
             <span className="text-rose mr-2">{index + 1}.</span>
             {restaurant.name}
+            {mode === 'to-du-lich' && restaurant.city && (
+              <span className="ml-2 text-rose/30 text-[14px] font-bold lowercase italic">
+                {restaurant.city}
+              </span>
+            )}
           </h2>
         </div>
       </div>

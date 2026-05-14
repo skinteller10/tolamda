@@ -42,9 +42,9 @@ service cloud.firestore {
              data.rating is number && data.rating >= 0 && data.rating <= 15 &&
              data.open is string && data.open.size() <= 10 &&
              data.close is string && data.close.size() <= 10 &&
-             data.img is string && data.img.size() <= 2000 &&
-             (data.get('address', '') is string && data.get('address', '').size() <= 1000) &&
-             (data.get('info', '') is string && data.get('info', '').size() <= 5000) &&
+             data.img is string && data.img.size() <= 1048576 &&
+             (data.get('address', '') is string && data.get('address', '').size() <= 2000) &&
+             (data.get('info', '') is string && data.get('info', '').size() <= 10000) &&
              (data.get('imgPath', '') is string && data.get('imgPath', '').size() <= 1000) &&
              (data.get('images', []) is list) &&
              (data.get('imagesPaths', []) is list) &&
@@ -60,13 +60,8 @@ service cloud.firestore {
 
     // --- Collection Routes ---
 
-    match /restaurants {
-      allow list: if true;
-    }
-
     match /restaurants/{restaurantId} {
-      allow get: if true;
-      allow list: if true;
+      allow read: if true;
       
       // Allow settings documents for admin
       allow write: if isAdmin() && (restaurantId == 'settings_filters' || restaurantId == 'settings_gallery');
@@ -90,7 +85,7 @@ service cloud.firestore {
                        incoming().updatedBy == request.auth.token.email &&
                        // Action: General Update (All mutable fields)
                        incoming().diff(existing()).affectedKeys().hasOnly([
-                         'name', 'city', 'type', 'form', 'rating', 'address', 'info', 
+                         'id', 'name', 'city', 'type', 'form', 'rating', 'address', 'info', 
                          'open', 'close', 'open2', 'close2', 'category', 'imageTypes',
                          'branch2Address', 'branch2Open', 'branch2Close', 'branch2Open2', 'branch2Close2',
                          'img', 'imgPath', 'images', 'imagesPaths',

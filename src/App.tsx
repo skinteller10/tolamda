@@ -324,28 +324,32 @@ export default function App() {
       const newExtraUrls: string[] = [];
       const newExtraPaths: string[] = [];
 
-      onProgress?.(`Đang tải lên ${finalImages.filter(x => typeof x !== 'string').length} ảnh...`);
+      onProgress?.(`Đang xử lý ${finalImages.filter(x => typeof x !== 'string').length} ảnh...`);
+
+      // Khởi tạo hàm fileToBase64
+      const fileToBase64 = (file: File | Blob): Promise<string> => {
+        return new Promise((resolve, reject) => {
+          const reader = new FileReader();
+          reader.readAsDataURL(file);
+          reader.onload = () => resolve(reader.result as string);
+          reader.onerror = error => reject(error);
+        });
+      };
 
       // Process images in parallel
       const uploadPromises = finalImages.map(async (item, i) => {
         if (typeof item === 'string') {
           return { type: 'existing', url: item, index: i };
         } else {
-          console.log(`Bắt đầu tải ảnh ${i} lên Storage...`);
-          const fileName = `${Date.now()}_${i}.webp`;
-          const path = `restaurants/${id}/${fileName}`;
-          const sRef = storageRef(storage, path);
-          
           try {
-            console.log(`Đang tải ảnh ${i} lên Storage...`);
-            const snapshot = await uploadBytes(sRef, item as File | Blob);
-            
-            const downloadUrl = await getDownloadURL(snapshot.ref);
-            console.log(`Tải ảnh ${i} thành công: ${downloadUrl}`);
-            return { type: 'new', url: downloadUrl, path, index: i };
+            console.log(`Đang chuyển ảnh ${i} sang base64...`);
+            const base64Url = await fileToBase64(item as File | Blob);
+            console.log(`Chuyển ảnh ${i} thành công.`);
+            const path = '';
+            return { type: 'new', url: base64Url, path, index: i };
           } catch (err) {
-            console.error(`Tải ảnh ${i} thất bại:`, err);
-            throw new Error(`Tải ảnh ${i} thất bại: ${err instanceof Error ? err.message : String(err)}`);
+            console.error(`Xử lý ảnh ${i} thất bại:`, err);
+            throw new Error(`Xử lý ảnh ${i} thất bại: ${err instanceof Error ? err.message : String(err)}`);
           }
         }
       });
@@ -580,6 +584,7 @@ export default function App() {
                       key={r.id.toString()}
                       restaurant={r}
                       index={(page - 1) * perPage + i}
+                      mode={view as any}
                     />
                   ) : (
                     <RestaurantCard
@@ -806,9 +811,9 @@ export default function App() {
                    </span>
                 </div>
               )}
-              <div className="flex flex-col min-h-[60vh] -mx-5 px-5">
-              {displayedRestaurants.map((r, i) => (
-                (adminCategory === 'to-an' || adminCategory === 'to-du-lich' || adminCategory === 'to-lam-da') ? (
+              <div className={cn("flex flex-col min-h-[60vh] -mx-5 px-5", (adminCategory === 'to-chup' || adminCategory === 'to-du-lich') ? "gap-4" : "gap-6")}>
+                {displayedRestaurants.map((r, i) => (
+                (adminCategory === 'to-an' || adminCategory === 'to-lam-da') ? (
                   <RestaurantCard
                     key={r.id}
                     restaurant={r as Restaurant}
@@ -842,6 +847,7 @@ export default function App() {
                     <GalleryCard
                       restaurant={r as Restaurant}
                       index={(adminPage - 1) * perPage + i}
+                      mode={adminCategory as any}
                     />
                     <div className="absolute top-4 right-5 flex gap-2">
                       <button 

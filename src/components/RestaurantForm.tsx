@@ -19,7 +19,7 @@ export const compressImage = async (
     const options = {
       maxSizeMB: 0.15, // Cố gắng nén dưới 150KB để lưu base64
       maxWidthOrHeight: 800,
-      useWebWorker: true,
+      useWebWorker: false,
       initialQuality: 0.6,
     };
 
