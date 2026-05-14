@@ -1,0 +1,45 @@
+@import url('https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&family=Playfair+Display:ital,wght@0,700;1,700&display=swap');
+@import "tailwindcss";
+
+@theme {
+  --font-sans: "Nunito", ui-sans-serif, system-ui, sans-serif;
+  --font-serif: "Playfair Display", serif;
+
+  --color-bg: #FFF8F5;
+  --color-rose: #FF612F;
+  --color-rose-dark: #E64A19;
+  --color-text: #2D1810;
+  --color-text-mid: #6D4C41;
+  --color-text-light: #A1887F;
+  --color-green: #10B981;
+  --color-green-dark: #059669;
+  --color-red: #F43F5E;
+  --color-red-dark: #E11D48;
+  --color-red-pale: #FFE4E6;
+
+  --shadow-card: 0 4px 12px rgba(255, 97, 47, 0.05), 0 2px 4px rgba(45, 24, 16, 0.04);
+}
+
+@layer base {
+  body {
+    @apply bg-bg text-text font-sans selection:bg-rose/20;
+  }
+}
+
+@layer components {
+  .btn-icon {
+    @apply flex h-11 w-11 items-center justify-center rounded-xl bg-rose/10 text-text transition-all active:scale-95 cursor-pointer;
+  }
+  .chip {
+    @apply rounded-xl border border-rose/15 bg-bg px-4.5 py-2.5 text-sm font-semibold text-text-mid transition-all cursor-pointer;
+  }
+  .chip-active {
+    @apply border-rose bg-rose font-bold text-white shadow-lg shadow-rose/20;
+  }
+  .badge {
+    @apply whitespace-nowrap rounded-lg border px-2.5 py-1 text-[11px] font-extrabold;
+  }
+  .fi {
+    @apply w-full rounded-2xl border-[1.5px] border-rose/15 bg-bg p-3.5 text-base text-text outline-none focus:border-rose focus:bg-white transition-all;
+  }
+}

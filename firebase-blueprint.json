@@ -1,0 +1,32 @@
+{
+  "entities": {
+    "Restaurant": {
+      "title": "Restaurant",
+      "description": "Địa điểm quán ăn hoặc làm đẹp",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "description": "ID duy nhất của quán" },
+        "name": { "type": "string", "description": "Tên quán" },
+        "city": { "type": "string", "enum": ["hanoi", "hcm", "hue", "danang", "dalat"], "description": "Thành phố" },
+        "rating": { "type": "number", "description": "Xếp hạng (0-n)" },
+        "address": { "type": "string", "description": "Địa chỉ" },
+        "info": { "type": "string", "description": "Thông tin chi tiết" },
+        "open": { "type": "string", "format": "time", "description": "Giờ mở cửa (HH:mm)" },
+        "close": { "type": "string", "format": "time", "description": "Giờ đóng cửa (HH:mm)" },
+        "img": { "type": "string", "format": "url", "description": "URL hình ảnh" },
+        "imgPath": { "type": "string", "description": "Đường dẫn ảnh trong Storage" },
+        "createdAt": { "type": "object", "description": "Timestamp thời điểm tạo" },
+        "createdBy": { "type": "string", "description": "Email người tạo" },
+        "updatedAt": { "type": "object", "description": "Timestamp thời điểm cập nhật" },
+        "updatedBy": { "type": "string", "description": "Email người cập nhật" }
+      },
+      "required": ["id", "name", "city", "rating", "open", "close", "img"]
+    }
+  },
+  "firestore": {
+    "/restaurants/{restaurantId}": {
+      "schema": "Restaurant",
+      "description": "Danh sách các nhà hàng/quán ăn"
+    }
+  }
+}

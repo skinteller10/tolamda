@@ -1,0 +1,102 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    // 0. Global Safety Net
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // --- Helpers ---
+    
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isAdmin() {
+      return isSignedIn(); // Allow any signed in user for now
+    }
+
+    function isValidId(id) {
+      return id is string && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    function incoming() {
+      return request.resource.data;
+    }
+
+    function existing() {
+      return resource.data;
+    }
+
+    // --- Entity Validations ---
+
+    function isValidRestaurant(data) {
+      return data.keys().hasAll(['id', 'name', 'city', 'type', 'form', 'rating', 'open', 'close', 'img', 'category']) &&
+             data.id is string && data.id.size() <= 128 &&
+             data.name is string && data.name.size() > 0 && data.name.size() <= 500 &&
+             data.category is string && data.category.size() <= 64 &&
+             data.city is string && data.city.size() <= 128 &&
+             data.type is string && data.type.size() <= 128 &&
+             data.form is string && data.form.size() <= 128 &&
+             data.rating is number && data.rating >= 0 && data.rating <= 15 &&
+             data.open is string && data.open.size() <= 10 &&
+             data.close is string && data.close.size() <= 10 &&
+             data.img is string && data.img.size() <= 2000 &&
+             (data.get('address', '') is string && data.get('address', '').size() <= 1000) &&
+             (data.get('info', '') is string && data.get('info', '').size() <= 5000) &&
+             (data.get('imgPath', '') is string && data.get('imgPath', '').size() <= 1000) &&
+             (data.get('images', []) is list) &&
+             (data.get('imagesPaths', []) is list) &&
+             (data.get('imageTypes', []) is list) &&
+             (data.get('open2', '') is string) &&
+             (data.get('close2', '') is string) &&
+             (data.get('branch2Address', '') is string) &&
+             (data.get('branch2Open', '') is string) &&
+             (data.get('branch2Close', '') is string) &&
+             (data.get('branch2Open2', '') is string) &&
+             (data.get('branch2Close2', '') is string);
+    }
+
+    // --- Collection Routes ---
+
+    match /restaurants/{restaurantId} {
+      allow read: if true;
+      
+      // Allow settings documents for admin
+      allow write: if isAdmin() && (restaurantId == 'settings_filters' || restaurantId == 'settings_gallery');
+      
+      allow create: if isAdmin() &&
+                       ! (restaurantId in ['settings_filters', 'settings_gallery']) &&
+                       isValidId(restaurantId) &&
+                       isValidRestaurant(incoming()) &&
+                       incoming().id == restaurantId &&
+                       incoming().createdAt == request.time &&
+                       incoming().createdBy == request.auth.token.email;
+                       
+      allow update: if isAdmin() &&
+                       ! (restaurantId in ['settings_filters', 'settings_gallery']) &&
+                       isValidId(restaurantId) &&
+                       isValidRestaurant(incoming()) &&
+                       incoming().id == existing().id &&
+                       incoming().createdAt == existing().createdAt &&
+                       incoming().createdBy == existing().createdBy &&
+                       incoming().updatedAt == request.time &&
+                       incoming().updatedBy == request.auth.token.email &&
+                       // Action: General Update (All mutable fields)
+                       incoming().diff(existing()).affectedKeys().hasOnly([
+                         'name', 'city', 'type', 'form', 'rating', 'address', 'info', 
+                         'open', 'close', 'open2', 'close2', 'category', 'imageTypes',
+                         'branch2Address', 'branch2Open', 'branch2Close', 'branch2Open2', 'branch2Close2',
+                         'img', 'imgPath', 'images', 'imagesPaths',
+                         'updatedAt', 'updatedBy'
+                       ]);
+                       
+      allow delete: if isAdmin() && isValidId(restaurantId);
+    }
+    match /settings/{docId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+  }
+}
