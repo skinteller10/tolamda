@@ -49,6 +49,19 @@ export const DEFAULT_CITIES_DULICH = [
   { id: 'saigon_dl', label: 'Sài Gòn' }
 ];
 
+export const SKIN_TYPES = [
+  { id: 'laser', label: 'Laser' },
+  { id: 'peel', label: 'Peel' },
+  { id: 'meso', label: 'Mesotherapy' }
+];
+
+export const SKIN_ISSUES = [
+  { id: 'acne', label: 'Mụn' },
+  { id: 'pigment', label: 'Nám/Thâm' },
+  { id: 'aging', label: 'Lão hóa' },
+  { id: 'sensitive', label: 'Nhạy cảm' }
+];
+
 export const GALLERY_TYPES = [
   { id: 'máy film', label: 'Máy film' },
   { id: 'máy số', label: 'Máy số' },

@@ -38,14 +38,9 @@ const GalleryCard: React.FC<GalleryCardProps> = ({ restaurant, index, mode }) =>
       {/* Header */}
       <div className="flex items-center justify-between">
         <div className="flex flex-col gap-0.5">
-          <h2 className="text-[20px] font-black uppercase tracking-tight text-text leading-none">
+          <h2 className="text-[20px] font-black tracking-tight text-text leading-none">
             <span className="text-rose mr-2">{index + 1}.</span>
             {restaurant.name}
-            {mode === 'to-du-lich' && restaurant.city && (
-              <span className="ml-2 text-rose/30 text-[14px] font-bold lowercase italic">
-                {restaurant.city}
-              </span>
-            )}
           </h2>
         </div>
       </div>
@@ -75,7 +70,7 @@ const GalleryCard: React.FC<GalleryCardProps> = ({ restaurant, index, mode }) =>
                 loading="lazy"
                 referrerPolicy="no-referrer"
               />
-              {isFilm && (
+              {isFilm && mode === 'to-chup' && (
                 <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
                   <span className="bg-black/60 backdrop-blur-sm text-white text-[8px] font-black uppercase tracking-widest px-2 py-1 rounded-full shadow-lg">
                     Máy film

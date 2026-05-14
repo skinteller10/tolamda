@@ -109,7 +109,7 @@ export default function FilterSection({
               <>
                 <div className="rounded-2xl border border-rose/10 bg-white/80 backdrop-blur-sm p-4 shadow-sm flex flex-col gap-3">
                   <span className="shrink-0 text-[11px] font-black uppercase tracking-[0.2em] text-text-light/80">
-                    Loại hình
+                    {isSkinCare ? 'Phương pháp' : 'Loại hình'}
                   </span>
                   <div className="flex flex-wrap gap-2">
                     {typesList.map((t) => (
@@ -126,7 +126,7 @@ export default function FilterSection({
 
                 <div className="rounded-2xl border border-rose/10 bg-white/80 backdrop-blur-sm p-4 shadow-sm flex flex-col gap-3">
                   <span className="shrink-0 text-[11px] font-black uppercase tracking-[0.2em] text-text-light/80">
-                    Hình thức
+                    {isSkinCare ? 'Vấn đề da' : 'Hình thức'}
                   </span>
                   <div className="flex flex-wrap gap-2">
                     {formsList.map((f) => (

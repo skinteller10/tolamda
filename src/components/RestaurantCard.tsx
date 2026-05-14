@@ -156,9 +156,11 @@ const RestaurantCard: React.FC<RestaurantCardProps> = ({ restaurant, ratingObj, 
               <h3 className="line-clamp-2 break-words text-[17px] font-bold leading-tight text-text tracking-tight font-sans">
                 {restaurant.name}
               </h3>
-              <span className={cn("badge shrink-0 shadow-sm border-rose/10 py-0.5 text-[10px]", ratingObj.bc)}>
-                {ratingObj.label}
-              </span>
+              {!isSkinCare && (
+                <span className={cn("badge shrink-0 shadow-sm border-rose/10 py-0.5 text-[10px]", ratingObj.bc)}>
+                  {ratingObj.label}
+                </span>
+              )}
             </div>
 
             {!isSkinCare && (
@@ -186,7 +188,7 @@ const RestaurantCard: React.FC<RestaurantCardProps> = ({ restaurant, ratingObj, 
                 </button>
                 <div className="flex-1 min-w-0">
                   <p className={cn(
-                    "text-[13px] text-text-mid leading-relaxed font-medium transition-all duration-300",
+                    "text-[13px] text-text-mid leading-relaxed font-medium transition-all duration-300 whitespace-pre-wrap",
                     !isArticleExpanded && "line-clamp-3"
                   )}>
                     {restaurant.info}

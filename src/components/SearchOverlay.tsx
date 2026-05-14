@@ -45,12 +45,22 @@ export default function SearchOverlay({ isOpen, onClose, onSearch, initialQuery 
               defaultValue={initialQuery}
               onKeyDown={handleKeyDown}
               className="flex-1 rounded-[22px] border-none bg-rose/5 px-6 py-4 text-base font-bold text-text-dark outline-none focus:ring-4 focus:ring-rose/5 transition-all placeholder:text-text-light/50"
-              placeholder="Tìm kiếm quán ăn..."
+              placeholder="Tìm kiếm..."
               autoComplete="off"
             />
             <button 
+              onClick={() => {
+                onSearch(inputRef.current?.value || '');
+                onClose();
+              }}
+              className="h-12 px-6 flex items-center justify-center rounded-[22px] bg-rose text-white font-black uppercase tracking-widest text-[13px] shadow-lg shadow-rose/20 active:scale-95 transition-all"
+            >
+              Tìm
+            </button>
+            <div className="w-[1px] h-8 bg-rose/10 hidden sm:block" />
+            <button 
               onClick={onClose} 
-              className="h-12 w-12 flex items-center justify-center rounded-full bg-text-light/10 text-text-mid hover:bg-rose/10 hover:text-rose transition-colors"
+              className="h-12 w-12 flex-shrink-0 flex items-center justify-center rounded-full bg-text-light/10 text-text-mid hover:bg-rose/10 hover:text-rose transition-colors"
             >
               <X size={20} strokeWidth={2.5} />
             </button>

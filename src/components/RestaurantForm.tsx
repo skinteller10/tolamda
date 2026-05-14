@@ -540,7 +540,7 @@ export default function RestaurantForm({
                                   ✕
                                 </button>
                               </div>
-                              {!isAn && (
+                              {mode === 'to-chup' && (
                                 <select 
                                   value={imageTypes[idx] || ''}
                                   onClick={e => e.stopPropagation()}

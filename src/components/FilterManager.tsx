@@ -18,15 +18,19 @@ interface FilterManagerProps {
   setRatings: (val: {label: string, bc: string}[]) => void;
   galleryTypes: {id: string, label: string}[];
   setGalleryTypes: (val: {id: string, label: string}[]) => void;
+  skinTypes: {id: string, label: string}[];
+  setSkinTypes: (val: {id: string, label: string}[]) => void;
+  skinIssues: {id: string, label: string}[];
+  setSkinIssues: (val: {id: string, label: string}[]) => void;
 }
 
 type MainTab = 'to-an' | 'to-chup' | 'to-du-lich' | 'to-lam-da';
-type SubTab = 'cities' | 'ratings' | 'types' | 'forms' | 'galleryTypes';
+type SubTab = 'cities' | 'ratings' | 'types' | 'forms' | 'galleryTypes' | 'skinTypes' | 'skinIssues';
 
 export default function FilterManager({
   onBack, cities, setCities, citiesDuLich, setCitiesDuLich, 
   types, setTypes, forms, setForms, ratings, setRatings,
-  galleryTypes, setGalleryTypes
+  galleryTypes, setGalleryTypes, skinTypes, setSkinTypes, skinIssues, setSkinIssues
 }: FilterManagerProps) {
   const [mainTab, setMainTab] = useState<MainTab>('to-an');
   const [activeTab, setActiveTab] = useState<SubTab>('cities');
@@ -44,13 +48,15 @@ export default function FilterManager({
       case 'forms': return forms;
       case 'ratings': return ratings.map((r, i) => ({ id: i.toString(), label: r.label, bc: r.bc }));
       case 'galleryTypes': return galleryTypes;
+      case 'skinTypes': return skinTypes;
+      case 'skinIssues': return skinIssues;
     }
   };
 
   const handleAdd = () => {
     if (!newItemText.trim()) return;
     const text = newItemText.trim();
-    if (!window.confirm(`Bạn có chắc chắn muốn thêm: "${text}"?`)) return;
+    // Removed window.confirm as it might be blocking and it's already an explicit click
     if (activeTab === 'cities') {
       if (mainTab === 'to-du-lich') setCitiesDuLich([...citiesDuLich, { id: 'city_dl_'+Date.now(), label: text }]);
       else setCities([...cities, { id: 'city_'+Date.now(), label: text }]);
@@ -62,13 +68,15 @@ export default function FilterManager({
       setRatings([...ratings, { label: text, bc: 'bg-white text-text border-text-light' }]);
     } else if (activeTab === 'galleryTypes') {
       setGalleryTypes([...galleryTypes, { id: 'gtype_'+Date.now(), label: text }]);
+    } else if (activeTab === 'skinTypes') {
+      setSkinTypes([...skinTypes, { id: 'skin_t_'+Date.now(), label: text }]);
+    } else if (activeTab === 'skinIssues') {
+      setSkinIssues([...skinIssues, { id: 'skin_i_'+Date.now(), label: text }]);
     }
     setNewItemText('');
   };
 
   const handleRemove = (indexToRem: number, gId: string) => {
-    const item = getActiveData()[indexToRem];
-    if (!window.confirm(`Bạn có chắc chắn muốn xóa: "${item.label}"?`)) return;
     if (activeTab === 'cities') {
       if (mainTab === 'to-du-lich') setCitiesDuLich(citiesDuLich.filter(x => x.id !== gId));
       else setCities(cities.filter(x => x.id !== gId));
@@ -77,6 +85,8 @@ export default function FilterManager({
     else if (activeTab === 'forms') setForms(forms.filter(x => x.id !== gId));
     else if (activeTab === 'ratings') setRatings(ratings.filter((_, i) => i !== indexToRem));
     else if (activeTab === 'galleryTypes') setGalleryTypes(galleryTypes.filter(x => x.id !== gId));
+    else if (activeTab === 'skinTypes') setSkinTypes(skinTypes.filter(x => x.id !== gId));
+    else if (activeTab === 'skinIssues') setSkinIssues(skinIssues.filter(x => x.id !== gId));
   };
 
   const startEditing = (id: string, currentLabel: string) => {
@@ -85,7 +95,6 @@ export default function FilterManager({
   };
 
   const saveEdit = (index: number, id: string) => {
-    if (!window.confirm("Lưu thay đổi?")) return;
     handleChange(index, id, editText);
     setEditingId(null);
   };
@@ -99,17 +108,25 @@ export default function FilterManager({
     else if (activeTab === 'forms') setForms(forms.map(x => x.id === gId ? {...x, label: newVal} : x));
     else if (activeTab === 'ratings') setRatings(ratings.map((x, i) => i === indexToEdit ? {...x, label: newVal} : x));
     else if (activeTab === 'galleryTypes') setGalleryTypes(galleryTypes.map(x => x.id === gId ? {...x, label: newVal} : x));
+    else if (activeTab === 'skinTypes') setSkinTypes(skinTypes.map(x => x.id === gId ? {...x, label: newVal} : x));
+    else if (activeTab === 'skinIssues') setSkinIssues(skinIssues.map(x => x.id === gId ? {...x, label: newVal} : x));
   };
 
   const data = getActiveData();
   const paginatedData = data.slice((page - 1) * perPage, page * perPage);
 
-  const subTabs = (mainTab === 'to-an' || mainTab === 'to-lam-da')
+  const subTabs = (mainTab === 'to-an')
     ? [
         { id: 'cities' as SubTab, name: 'Thành phố' },
         { id: 'types' as SubTab, name: 'Loại quán' },
         { id: 'forms' as SubTab, name: 'Hình thức' },
         { id: 'ratings' as SubTab, name: 'Đánh giá' }
+      ]
+    : mainTab === 'to-lam-da'
+    ? [
+        { id: 'cities' as SubTab, name: 'Thành phố' },
+        { id: 'skinIssues' as SubTab, name: 'Vấn đề da' },
+        { id: 'skinTypes' as SubTab, name: 'Phương pháp' }
       ]
     : mainTab === 'to-du-lich'
     ? [
@@ -173,7 +190,7 @@ export default function FilterManager({
         <input 
           value={newItemText}
           onChange={e => setNewItemText(e.target.value)}
-          placeholder={`Thêm ${activeTab === 'cities' ? 'thành phố' : activeTab === 'ratings' ? 'đánh giá' : (activeTab === 'types' || activeTab === 'galleryTypes') ? 'loại' : 'hình thức'} mới...`} 
+          placeholder={`Thêm ${activeTab === 'cities' ? 'thành phố' : activeTab === 'ratings' ? 'đánh giá' : activeTab === 'skinIssues' ? 'vấn đề da' : activeTab === 'skinTypes' ? 'phương pháp' : (activeTab === 'types' || activeTab === 'galleryTypes') ? 'loại' : 'hình thức'} mới...`} 
           className="fi flex-1"
           onKeyDown={e => e.key === 'Enter' && handleAdd()}
         />

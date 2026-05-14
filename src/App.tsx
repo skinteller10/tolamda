@@ -29,7 +29,7 @@ import {
   deleteObject 
 } from 'firebase/storage';
 import { auth, db, storage, OperationType, handleFirestoreError } from './lib/firebase';
-import { Restaurant, Rating, DEFAULT_RATINGS, DEFAULT_CITIES, DEFAULT_CITIES_DULICH, DEFAULT_TYPES, DEFAULT_FORMS, GALLERY_TYPES } from './types';
+import { Restaurant, Rating, DEFAULT_RATINGS, DEFAULT_CITIES, DEFAULT_CITIES_DULICH, DEFAULT_TYPES, DEFAULT_FORMS, GALLERY_TYPES, SKIN_TYPES, SKIN_ISSUES } from './types';
 import { cn } from './lib/utils';
 import Header from './components/Header';
 import FilterSection from './components/FilterSection';
@@ -64,6 +64,10 @@ export default function App() {
   const [citiesListDuLich, setCitiesListDuLich] = useState(DEFAULT_CITIES_DULICH);
   const [typesList, setTypesList] = useState(DEFAULT_TYPES);
   const [formsList, setFormsList] = useState(DEFAULT_FORMS);
+  
+  // Skin Care Specific Lists
+  const [skinTypesList, setSkinTypesList] = useState(SKIN_TYPES);
+  const [skinIssuesList, setSkinIssuesList] = useState(SKIN_ISSUES);
   
   // Gallery Specific Lists
   const [galleryTypesList, setGalleryTypesList] = useState(GALLERY_TYPES);
@@ -144,6 +148,8 @@ export default function App() {
             if (s.types) setTypesList(s.types);
             if (s.forms) setFormsList(s.forms);
             if (s.ratings) setRatings(s.ratings);
+            if (s.skinTypes) setSkinTypesList(s.skinTypes);
+            if (s.skinIssues) setSkinIssuesList(s.skinIssues);
           }
         } catch (error) {
           handleFirestoreError(error, OperationType.GET, 'restaurants/settings_filters');
@@ -177,6 +183,8 @@ export default function App() {
           types: typesList,
           forms: formsList,
           ratings: ratings,
+          skinTypes: skinTypesList,
+          skinIssues: skinIssuesList,
           isSettingsMap: true
         }, { merge: true });
       } catch (err) {
@@ -267,7 +275,13 @@ export default function App() {
     if (selectedCities.size > 0) d = d.filter(r => selectedCities.has(r.city));
     if (selectedRatings.size > 0) d = d.filter(r => selectedRatings.has(r.rating) || selectedRatings.has(Number(r.rating)));
     if (selectedTypes.size > 0) d = d.filter(r => selectedTypes.has(r.type || (isChupView ? 'máy film' : 'cafe')));
-    if (selectedForms.size > 0) d = d.filter(r => selectedForms.has(r.form || 'offline'));
+    if (selectedForms.size > 0) {
+      if (view === 'to-lam-da' || (view === 'admin' && adminCategory === 'to-lam-da')) {
+        d = d.filter(r => selectedForms.has(r.form));
+      } else {
+        d = d.filter(r => selectedForms.has(r.form || 'offline'));
+      }
+    }
     if (openNowMode && (isAnView || isDuLichView)) d = d.filter(r => isRestaurantOpen(r, currentTime));
     
     if (searchQuery) {
@@ -563,8 +577,8 @@ export default function App() {
               }}
               currentTime={currentTime}
               hasSearchQuery={searchQuery.length > 0}
-              typesList={view === 'to-chup' ? galleryTypesList : typesList}
-              formsList={formsList}
+              typesList={view === 'to-chup' ? galleryTypesList : (view === 'to-lam-da' ? skinTypesList : typesList)}
+              formsList={view === 'to-lam-da' ? skinIssuesList : formsList}
               ratingsList={ratings}
             />
 
@@ -795,8 +809,8 @@ export default function App() {
                       currentTime={currentTime}
                       hasSearchQuery={searchQuery.length > 0}
                       citiesList={adminCategory === 'to-du-lich' ? citiesListDuLich : citiesList}
-                      typesList={adminCategory === 'to-chup' ? galleryTypesList : typesList}
-                      formsList={formsList}
+                      typesList={adminCategory === 'to-chup' ? galleryTypesList : (adminCategory === 'to-lam-da' ? skinTypesList : typesList)}
+                      formsList={adminCategory === 'to-lam-da' ? skinIssuesList : formsList}
                       ratingsList={ratings}
                     />
               </div>
@@ -909,6 +923,8 @@ export default function App() {
               forms={formsList} setForms={setFormsList}
               ratings={ratings} setRatings={setRatings}
               galleryTypes={galleryTypesList} setGalleryTypes={setGalleryTypesList}
+              skinTypes={skinTypesList} setSkinTypes={setSkinTypesList}
+              skinIssues={skinIssuesList} setSkinIssues={setSkinIssuesList}
             />
           </div>
         )}
@@ -956,8 +972,8 @@ export default function App() {
         editingRestaurant={editingRestaurant}
         ratings={ratings}
         citiesList={adminCategory === 'to-du-lich' ? citiesListDuLich : citiesList}
-        typesList={adminCategory === 'to-an' ? typesList : galleryTypesList}
-        formsList={formsList}
+        typesList={adminCategory === 'to-an' ? typesList : (adminCategory === 'to-lam-da' ? skinTypesList : galleryTypesList)}
+        formsList={adminCategory === 'to-lam-da' ? skinIssuesList : formsList}
         compressionSettings={compressionSettings}
         mode={adminCategory}
       />
