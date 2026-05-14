@@ -49,9 +49,9 @@ require_once 'database.php';
             e.preventDefault();
             setLoading(true);
             try {
-                // Logic nén ảnh & upload Storage tương tự file App.tsx/RestaurantForm.tsx
-                // ... (AI có thể đọc file AI_GUIDE để biết cách viết tiếp)
-                await db.collection('restaurants').add({
+                // Đảm bảo dùng đúng DB ID
+                const restaurantsRef = db.collection('restaurants');
+                await restaurantsRef.add({
                     ...formData,
                     createdAt: firebase.firestore.FieldValue.serverTimestamp()
                 });

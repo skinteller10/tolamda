@@ -102,11 +102,11 @@ require_once 'database.php';
                                                 ))}
                                             </div>
                                         ) : (
-                                            <div className="aspect-[4/3] rounded-2xl overflow-hidden bg-rose/5">
+                                            <div className="aspect-[4/3] rounded-2xl overflow-hidden bg-rose/5 flex items-center justify-center">
                                                 {item.images && item.images[0] ? (
                                                     <img src={item.images[0]} className="w-full h-full object-cover" loading="lazy" />
                                                 ) : (
-                                                    <div className="w-full h-full flex items-center justify-center opacity-20"><lucide-icon name="image" size="40"></lucide-icon></div>
+                                                    <i data-lucide="image" className="w-12 h-12 text-rose/20"></i>
                                                 )}
                                             </div>
                                         )}
